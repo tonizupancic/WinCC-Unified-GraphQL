@@ -1,0 +1,212 @@
+<!-- Dodan primer iz ECharts -->
+
+<html>
+  <head>
+    <title>GraphQL Sample</title>
+    <script type="text/javascript" src="graphql.js"></script>
+    <script type="text/javascript" src="https://fastly.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+    
+  </head>
+  <body>
+      <label for="input1"></label>
+      <input type="text" id="input1" placeholder="username" style="margin: 5px;">
+      <br>
+      <label for="input2"></label>
+      <input type="password" id="input2" placeholder="password" style="margin: 5px;">
+      <br>
+      <button id="submitButton1" style="margin: 5px;">Log in</button>
+      <button id="submitButton2" style="margin: 5px;">Log off</button>
+    <br>
+    <p id="loggedUser" style="margin: 5px;">Prijavljeni uporabnik: /</p>
+    <br>
+    <button id="queryButton" onclick="queryValue()">Query Value</button>
+    <button id="mutateButton" onclick="mutateValue()">Mutate Value</button>
+    <p id="demo"></p>
+    <br>
+    <br>
+    <div id="container" style="height: 70%"></div>
+  </body>
+  <script>
+        const loginForm = document.getElementById('loginForm');
+        const input1 = document.getElementById('input1');
+        const input2 = document.getElementById('input2');
+        const submitButton1 = document.getElementById('submitButton1');
+        const submitButton2 = document.getElementById('submitButton2');
+        const usernamePrint = document.getElementById('loggedUser');
+
+        function handleSubmit1(){
+            const value1 = input1.value;
+            const value2 = input2.value;
+
+            if(value1 == "Siemens" & value2 == "Siemens123") {
+              alert("You are logged in!");
+              usernamePrint.innerHTML =`Prijavljeni uporabnik: <b>${value1}</b>`;
+              input1.value ="";
+              input2.value ="";
+              graphqlLogin();
+            }
+            else {
+              alert("Try again!");
+              input1.value ="";
+              input2.value ="";
+              usernamePrint.innerHTML ="Prijavljeni uporabnik: /";
+            }
+        }
+
+        function handleSubmit2(){
+          input1.value ="";
+          input2.value ="";
+          usernamePrint.innerHTML ="Prijavljeni uporabnik: /";
+          AUTH_TOKEN = "";
+          document.getElementById("demo").innerHTML = '<b>Vrednost je: Uporabnik ni prijavljen!<b>';
+        }
+
+        submitButton1.addEventListener('click', handleSubmit1);
+        submitButton2.addEventListener('click', handleSubmit2);
+
+  </script>
+
+<script type="text/javascript">
+
+  let valueFromGQL;  // dodano za izris
+  let GRAPHQL_URL = "https://unifiedv18/graphql/";
+  let AUTH_TOKEN; 
+
+// LOGIN ///////////////////////////////////////////////////////////////////////////////////////
+function graphqlLogin(){
+  let graph = graphql(GRAPHQL_URL, { asJSON: true});
+
+  let strGetToken= `mutation {
+        login(username: "Siemens", password: "Siemens123") {
+            token
+            expires
+        }   
+  }`;
+
+  graph(strGetToken)().then((data) => {
+    AUTH_TOKEN = data.login.token;
+  })
+};
+////////////////////////////////////////////////////////////////////////////////////////////////
+
+// QUERY VALUE /////////////////////////////////////////////////////////////////////////////////
+function queryValue(){
+  let headers = { "Authorization": `Bearer ${AUTH_TOKEN}` };
+  let graph = graphql(GRAPHQL_URL, { asJSON: true, headers });
+  let readValue;
+
+  let strTagValueQuery = `query {
+      tagValues(names: "GQLTag1") {
+          value {
+              value
+          }
+      }
+  }`;
+
+  graph(strTagValueQuery)().then((data) => {
+      readValue = data.tagValues[0].value.value;
+      document.getElementById("demo").innerHTML = 
+      '<b>Vrednost je: ' + readValue +'<b>';
+  });
+
+setTimeout(function(){
+  risiEchart(readValue)
+}, 50);
+
+};
+///////////////////////////////////////////////////////////////////////////////////////////////
+
+// MUTATION ///////////////////////////////////////////////////////////////////////////////////
+function mutateValue(){
+  let headers = { "Authorization": `Bearer ${AUTH_TOKEN}` };
+  let graph = graphql(GRAPHQL_URL, { asJSON: true, headers });
+
+  let strTagValueMutation = `mutation {
+      writeTagValues(input: {name: "GQLTag1", value: 33}) {
+      error {
+        code
+      }
+    }
+  }`;
+
+  graph(strTagValueMutation)(); 
+};
+///////////////////////////////////////////////////////////////////////////////////////////////
+
+
+//  ECHART ////////////////////////////////////////////////////////////////////////////////////
+function risiEchart(value){
+  var dom = document.getElementById('container');
+  var myChart = echarts.init(dom, null, {
+    renderer: 'canvas',
+    useDirtyRect: false
+  });
+  var app = {};
+
+  var option;
+
+  option = {
+      series: [
+          {
+          type: 'gauge',
+          progress: {
+              show: true,
+              width: 18
+          },
+          axisLine: {
+              lineStyle: {
+              width: 18
+              }
+          },
+          axisTick: {
+              show: false
+          },
+          splitLine: {
+              length: 15,
+              lineStyle: {
+              width: 2,
+              color: '#999'
+              }
+          },
+          axisLabel: {
+              distance: 25,
+              color: '#999',
+              fontSize: 20
+          },
+          anchor: {
+              show: true,
+              showAbove: true,
+              size: 25,
+              itemStyle: {
+              borderWidth: 10
+              }
+          },
+          title: {
+              show: false
+          },
+          detail: {
+              valueAnimation: true,
+              fontSize: 80,
+              offsetCenter: [0, '70%']
+          },
+          data: [
+              {
+              value: value
+              }
+          ]
+          }
+      ]
+  };
+
+  if (option && typeof option === 'object') {
+    myChart.setOption(option);
+  }
+
+  window.addEventListener('resize', myChart.resize);
+}
+  // konec izrisa //
+
+///////////////////////////////////////////////////////////////////////////////////////////////
+</script>
+</html>
+</html>

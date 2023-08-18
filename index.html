@@ -28,6 +28,7 @@
     function queryValue(){
       let headers = { "Authorization": `Bearer ${AUTH_TOKEN}` };
       let graph = graphql(GRAPHQL_URL, { asJSON: true, headers });
+      let readValue;
 
       let strTagValueQuery = `query {
           tagValues(names: "GQLTag1") {
@@ -38,15 +39,14 @@
       }`;
 
       graph(strTagValueQuery)().then((data) => {
-          let readValue = data.tagValues[0].value.value;
-          document.getElementById("demo").innerHTML = 
-          '<b>Vrednost je: ' + readValue +'<b>';
+          readValue = data.tagValues[0].value.value;
+          document.getElementById("demo").innerHTML = '<b>Vrednost je: ' + readValue +'<b>';
       });
     };
     ///////////////////////////////////////////////////////////////////////////////////////////////
 
     // MUTATION ///////////////////////////////////////////////////////////////////////////////////
-    function mutuateValue(){
+    function mutateValue(){
       let headers = { "Authorization": `Bearer ${AUTH_TOKEN}` };
       let graph = graphql(GRAPHQL_URL, { asJSON: true, headers });
 
@@ -66,10 +66,10 @@
     </script>
   </head>
   <body>
-      <label for="input1">Input 1:</label>
+      <label for="input1"></label>
       <input type="text" id="input1" placeholder="username">
       <br>
-      <label for="input2">Input 2:</label>
+      <label for="input2"></label>
       <input type="password" id="input2" placeholder="password">
       <br>
       <button id="submitButton1">Log in</button>
@@ -78,7 +78,7 @@
     <p id="loggedUser">Prijavljeni uporabnik: /</p>
     <br>
     <button id="queryButton" onclick="queryValue()">Query Value</button>
-    <button id="mutuateButton" onclick="mutuateValue()">Mutuate Value</button>
+    <button id="mutateButton" onclick="mutateValue()">Mutate Value</button>
     <p id="demo"></p>
   </body>
   <script>
